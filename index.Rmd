@@ -5,3 +5,50 @@ date: "11/29/2017"
 output: html_document
 ---
 
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(leaflet)
+library(leaflet)
+library(ggplot2)
+library(DT)
+```
+
+```{r, cache=TRUE}
+counts <- read.csv("https://knb.ecoinformatics.org/knb/d1/mn/v2/object/knb.92020.1", stringsAsFactors = F)
+
+```
+
+```{r}
+#median annual escapement by sps
+median_esc <- counts %>%
+  separate(sampleDate, c("Year", "Month", "Day"), sep="-") %>%
+  group_by(Species, Location, Year) %>%
+  summarize(escapement = sum(DailyCount, na.rm=T)) %>%
+  group_by(Species) %>%
+  summarise(median_escapement = median(escapement, na.rm=T))
+  
+ggplot(median_esc, aes(Species, median_escapement)) +
+  geom_col() + coord_flip()
+
+```
+
+```{r}
+datatable(median_esc)
+```
+
+
+```{r}
+locations <- counts %>%
+  distinct(Location, Latitude, Longitude) %>%
+  drop_na()
+
+leaflet(locations) %>%
+  addTiles() %>%
+  addMarkers(~-abs(Longitude), ~Latitude, popup =~Location)
+
+```
+
+
+
